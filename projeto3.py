@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt  # Importa a biblioteca Matplotlib para visualiz
 from collections import defaultdict  # Importa defaultdict para contagem de rodadas de forma eficiente
 import matplotlib.patches as mpatches # Importa mpatches para visualização da tabela
 
-def is_valid_assignment(node, round_assignment, graph, round_count, max_games_per_round):
+def is_valid(node, rodada_atribuida, G, rodada_count, max_jogos_por_rodada):
     """
     Verifica se a atribuição de rodada para o jogo (node) respeita as restrições:
       - O jogo não pode ser alocado em uma rodada proibida (ver restricoes_rodadas);
@@ -14,15 +14,15 @@ def is_valid_assignment(node, round_assignment, graph, round_count, max_games_pe
     
     Parâmetros:
       - node (tuple): O jogo a ser alocado (exemplo: ('TFC', 'AFC'))
-      - round_assignment (dict): Atribuição de rodadas atual para os jogos
-      - graph (networkx.Graph): O grafo que representa os jogos e as conexões entre eles
-      - round_count (dict): Contagem do número de jogos por rodada
-      - max_games_per_round (int): Número máximo de jogos permitidos por rodada
+      - rodada_atribuida (dict): Atribuição de rodadas atual para os jogos
+      - G (networkx.Graph): O grafo que representa os jogos e as conexões entre eles
+      - rodada_count (dict): Contagem do número de jogos por rodada
+      - max_jogos_por_rodada (int): Número máximo de jogos permitidos por rodada
     
     Retorna:
       - bool: True se a atribuição for válida, False caso contrário.
     """
-    rodada = round_assignment[node]
+    rodada = rodada_atribuida[node]
     
     # Verifica restrições específicas de rodadas
     restricoes = []
@@ -34,50 +34,50 @@ def is_valid_assignment(node, round_assignment, graph, round_count, max_games_pe
         return False
 
     # Verifica se a rodada já atingiu o limite de jogos
-    if round_count[rodada] >= max_games_per_round:
+    if rodada_count[rodada] >= max_jogos_por_rodada:
         return False
 
     # Verifica conflitos com jogos adjacentes (jogos que compartilham times ou por restrição de mandante)
-    for neighbor in graph[node]:
-        if neighbor in round_assignment and round_assignment[neighbor] == rodada:
+    for neighbor in G[node]:
+        if neighbor in rodada_atribuida and rodada_atribuida[neighbor] == rodada:
             return False
 
     return True
 
-def backtracking_coloring(graph, max_colors=14, max_games_per_round=3):
+def backtracking_coloring(G, max_colors=14, max_jogos_por_rodada=3):
     """
     Algoritmo de backtracking para atribuir rodadas (cores) aos jogos,
     respeitando as restrições impostas.
     
     Parâmetros:
-      - graph (networkx.Graph): O grafo representando os jogos e as restrições entre eles
+      - G (networkx.Graph): O grafo representando os jogos e as restrições entre eles
       - max_colors (int): Número máximo de rodadas (cores) a serem utilizadas
-      - max_games_per_round (int): Número máximo de jogos permitidos por rodada
+      - max_jogos_por_rodada (int): Número máximo de jogos permitidos por rodada
     
     Retorna:
       - dict: Atribuição de rodadas (cores) para os jogos ou None se não for possível alocar.
     """
     # Seleciona apenas os nós referentes a jogos (tuplas)
-    jogos = [node for node in graph if isinstance(node, tuple)]
-    round_assignment = {}  # Armazena a rodada atribuída a cada jogo
-    round_count = {f"R{i}": 0 for i in range(1, max_colors + 1)}  # Contagem de jogos por rodada
+    jogos = [node for node in G if isinstance(node, tuple)]
+    rodada_atribuida = {}  # Armazena a rodada atribuída a cada jogo
+    rodada_count = {f"R{i}": 0 for i in range(1, max_colors + 1)}  # Contagem de jogos por rodada
 
     def solve(index):
         if index == len(jogos):
             return True  # Todos os jogos foram alocados com sucesso
         node = jogos[index]
-        for rodada in round_count:
-            round_assignment[node] = rodada
-            if is_valid_assignment(node, round_assignment, graph, round_count, max_games_per_round):
-                round_count[rodada] += 1
+        for rodada in rodada_count:
+            rodada_atribuida[node] = rodada
+            if is_valid(node, rodada_atribuida, G, rodada_count, max_jogos_por_rodada):
+                rodada_count[rodada] += 1
                 if solve(index + 1):
                     return True
-                round_count[rodada] -= 1  # Backtracking
-            del round_assignment[node]
+                rodada_count[rodada] -= 1  # Backtracking
+            del rodada_atribuida[node]
         return False
 
     if solve(0):
-        return round_assignment
+        return rodada_atribuida
     else:
         return None
 
@@ -128,7 +128,7 @@ def visualizar_grafo_coloring(G, coloring):
     plt.tight_layout()
     plt.show()
 
-def add_edge_for_restrictions(jogos, restricoes_mandante, G):
+def add_arestas_de_restrição(jogos, restricoes_mandante, G):
     """
     Adiciona arestas ao grafo com base nas restrições gerais e específicas de mandante.
     
@@ -147,15 +147,15 @@ def add_edge_for_restrictions(jogos, restricoes_mandante, G):
             if (jogo1[0] == time1 and jogo2[0] == time2) or (jogo1[0] == time2 and jogo2[0] == time1):
                 G.add_edge(jogo1, jogo2)
 
-def print_schedule(schedule):
+def print_cronograma(cronograma):
     """
     Imprime o cronograma de jogos, organizado por rodada.
     
     Parâmetros:
-      - schedule (dict): Dicionário com as rodadas como chave e os jogos como valor.
+      - cronograma (dict): Dicionário com as rodadas como chave e os jogos como valor.
     """
     # Organiza os jogos por rodada
-    for rodada, jogos_list in sorted(schedule.items(), key=lambda x: int(x[0][1:])):
+    for rodada, jogos_list in sorted(cronograma.items(), key=lambda x: int(x[0][1:])):
         print(f"Rodada {rodada[1:]}: ")
         for (t1, t2) in jogos_list:
             print(f"{t1} X {t2}")
@@ -187,16 +187,16 @@ restricoes_rodadas = {
 }
 
 # Adicionar as restrições como arestas
-add_edge_for_restrictions(jogos, restricoes_mandante, G)
+add_arestas_de_restrição(jogos, restricoes_mandante, G)
 
 # Gerar a coloração com Backtracking
 coloracao = backtracking_coloring(G)
 
 # Organizar os jogos por rodada
-schedule = defaultdict(list)
+cronograma = defaultdict(list)
 for jogo, rodada in coloracao.items():
-    schedule[rodada].append(jogo)
-print_schedule(schedule)
+    cronograma[rodada].append(jogo)
+print_cronograma(cronograma)
 
 # Exibe o grafo
 visualizar_grafo_coloring(G, coloracao)

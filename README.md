@@ -80,8 +80,10 @@ Isso irá sair do ambiente virtual e retornar ao terminal normal.
 
 ## Conclusão
 Este projeto demonstra a aplicação prática de algoritmos de coloração de grafos para resolver problemas reais de escalonamento esportivo. Entre os principais resultados, destacam-se:
+
 1. Construção do Grafo: Representação dos jogos e das restrições de forma estruturada.
 2. Algoritmo de Backtracking: Atribuição de rodadas aos jogos respeitando as restrições, evitando que um time jogue mais de uma vez na mesma rodada.
 3. Visualização: Exibição gráfica do grafo com nós renomeados no formato "Time1 X Time2" e cores que representam as rodadas, além de uma legenda detalhada.
 4. Cronograma de Jogos: Impressão organizada do cronograma no terminal, facilitando a verificação e análise dos resultados.
+
 Através deste projeto, é possível explorar técnicas avançadas de grafos e backtracking, aplicadas a problemas de otimização e escalonamento, oferecendo uma ferramenta útil para a gestão de campeonatos esportivos.
